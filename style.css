@@ -1,0 +1,369 @@
+:root{
+  --bg:#0b0f14;
+  --panel:#121a24;
+  --panel2:#0f1620;
+  --text:#e8eef7;
+  --muted:#a9b5c7;
+
+  --red:#ff3355;
+  --yellow:#ffd23f;
+  --blue:#35d0ff;
+  --green:#3dff7a;
+
+  --laneW: 120px;
+  --gameH: 640px;
+  --hitY: 520px;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background: radial-gradient(1200px 700px at 50% -10%, #1a2a40 0%, var(--bg) 60%);
+  color:var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 18px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  background: linear-gradient(180deg, rgba(18,26,36,.9), rgba(18,26,36,.5));
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top:0;
+  z-index:10;
+}
+
+.brand{display:flex; gap:12px; align-items:center;}
+.logo{
+  width:40px;height:40px;border-radius:12px;
+  display:grid;place-items:center;
+  background: rgba(255,255,255,.08);
+}
+.title{font-weight:800; letter-spacing:.5px}
+.subtitle{font-size:12px;color:var(--muted)}
+
+.controls{display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end}
+.btn{
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color:var(--text);
+  padding:10px 12px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:650;
+  font-size:13px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.btn:hover{background: rgba(255,255,255,.10)}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+.btn.primary{background: rgba(58, 160, 255,.18); border-color: rgba(58,160,255,.35)}
+.btn.primary:hover{background: rgba(58,160,255,.24)}
+.btn.secondary{background: rgba(255,255,255,.04)}
+
+.layout{
+  display:grid;
+  grid-template-columns: 380px 1fr;
+  gap:16px;
+  padding:16px;
+  max-width: 1220px;
+  margin: 0 auto;
+}
+
+.panel{
+  background: linear-gradient(180deg, rgba(18,26,36,.85), rgba(15,22,32,.8));
+  border:1px solid rgba(255,255,255,.10);
+  border-radius: 16px;
+  padding:14px 14px;
+  margin-bottom: 14px;
+}
+
+.panel h2{
+  margin:0 0 12px;
+  font-size:14px;
+  color: #d9e6ff;
+  letter-spacing:.3px;
+}
+
+.row{margin-bottom:12px}
+.label{font-size:12px;color:var(--muted); margin-bottom:6px}
+.hint{font-size:12px;color: rgba(169,181,199,.9); margin-top:6px; line-height:1.25}
+.status{
+  font-size:12px;
+  padding:10px;
+  border-radius:12px;
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.10);
+}
+
+input[type="number"]{
+  width:100%;
+  padding:10px 12px;
+  border-radius:12px;
+  background: rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.12);
+  color:var(--text);
+  outline:none;
+}
+
+input[type="text"]{
+  width:100%;
+  padding:10px 12px;
+  border-radius:12px;
+  background: rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.12);
+  color:var(--text);
+  outline:none;
+}
+
+.inlineInput{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.inlineInput .btn{
+  white-space:nowrap;
+}
+
+.keymap{display:flex; gap:8px}
+.keychip{
+  width:42px; height:34px;
+  border-radius:10px;
+  display:grid; place-items:center;
+  font-weight:900;
+  color:#081019;
+}
+.keychip.red{background:var(--red)}
+.keychip.yellow{background:var(--yellow)}
+.keychip.blue{background:var(--blue)}
+.keychip.green{background:var(--green)}
+
+.scoreGrid{
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:10px;
+}
+.stat{
+  background: rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;
+  padding:10px 12px;
+}
+.statLabel{font-size:12px;color:var(--muted)}
+.statValue{font-size:22px;font-weight:900;margin-top:2px}
+
+.judges{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:8px;
+  margin-top: 10px;
+  font-size:13px;
+  color: rgba(233,240,255,.95);
+}
+.lastJudge{
+  margin-top:12px;
+  padding:12px;
+  border-radius:14px;
+  text-align:center;
+  font-weight:900;
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.10);
+}
+.lastJudge.perfect{box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 0 20px rgba(58,160,255,.30)}
+.lastJudge.good{box-shadow: 0 0 0 1px rgba(255,255,255,.10), 0 0 18px rgba(61,255,122,.25)}
+.lastJudge.bad{box-shadow: 0 0 0 1px rgba(255,255,255,.10), 0 0 18px rgba(255,210,63,.18)}
+.lastJudge.miss{box-shadow: 0 0 0 1px rgba(255,255,255,.10), 0 0 18px rgba(255,51,85,.20)}
+
+.gameWrap{display:flex; flex-direction:column; gap:10px; align-items:center}
+.gameHUD{
+  width: calc(var(--laneW) * 4);
+  max-width: 96vw;
+  background: rgba(18,26,36,.75);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius: 16px;
+  padding: 10px 12px;
+}
+.songName{font-weight:850; font-size:14px}
+.smallText{font-size:12px;color:var(--muted); margin-top:8px}
+.timeLine{
+  margin-top:8px;
+  height:10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.10);
+}
+.timeFill{
+  height:100%;
+  width:0%;
+  background: linear-gradient(90deg, rgba(58,160,255,.75), rgba(61,255,122,.75));
+}
+
+.game{
+  width: calc(var(--laneW) * 4);
+  max-width: 96vw;
+  height: var(--gameH);
+  position: relative;
+  border-radius: 18px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.12);
+  background:
+    radial-gradient(900px 500px at 50% -40%, rgba(58,160,255,.16), transparent 60%),
+    linear-gradient(180deg, rgba(15,22,32,.9), rgba(9,13,18,.95));
+  display:grid;
+  grid-template-columns: repeat(4, var(--laneW));
+}
+
+.lane{
+  position: relative;
+  border-left:1px solid rgba(255,255,255,.06);
+  border-right:1px solid rgba(255,255,255,.04);
+  --laneGlow: rgba(255,255,255,.35);
+}
+.lane.red{--laneGlow: rgba(255,51,85,.55)}
+.lane.yellow{--laneGlow: rgba(255,210,63,.50)}
+.lane.blue{--laneGlow: rgba(53,208,255,.52)}
+.lane.green{--laneGlow: rgba(61,255,122,.52)}
+.laneLabel{
+  position:absolute;
+  top:10px; left:10px;
+  font-size:12px;
+  opacity:.5;
+  font-weight:900;
+}
+.lane.red .laneLabel{color:var(--red)}
+.lane.yellow .laneLabel{color:var(--yellow)}
+.lane.blue .laneLabel{color:var(--blue)}
+.lane.green .laneLabel{color:var(--green)}
+
+.lane.hit::after{
+  content:"";
+  position:absolute;
+  left:14px;
+  right:14px;
+  top: calc(var(--hitY) - 12px);
+  height: 24px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,.16), var(--laneGlow));
+  filter: blur(.5px);
+  animation: laneHitFlash .16s ease-out;
+  pointer-events:none;
+}
+
+.hitLine{
+  position:absolute;
+  left:0; right:0;
+  top: var(--hitY);
+  height: 4px;
+  background: rgba(255,255,255,.85);
+  box-shadow: 0 6px 24px rgba(255,255,255,.14);
+  pointer-events:none;
+}
+
+.note{
+  position:absolute;
+  left: 16px;
+  width: calc(var(--laneW) - 32px);
+  height: 18px;
+  border-radius: 8px;
+  top: -30px;
+  opacity: .98;
+  box-shadow: 0 10px 24px rgba(0,0,0,.25);
+}
+
+.note.red{background: linear-gradient(180deg, rgba(255,51,85,1), rgba(255,51,85,.65))}
+.note.yellow{background: linear-gradient(180deg, rgba(255,210,63,1), rgba(255,210,63,.65))}
+.note.blue{background: linear-gradient(180deg, rgba(53,208,255,1), rgba(53,208,255,.65))}
+.note.green{background: linear-gradient(180deg, rgba(61,255,122,1), rgba(61,255,122,.65))}
+
+.note .cap{
+  position:absolute; inset:0;
+  border-radius: 8px;
+  border:1px solid rgba(255,255,255,.22);
+}
+
+.hitPads{
+  position:absolute;
+  left:0; right:0;
+  top: calc(var(--hitY) + 20px);
+  height: 80px;
+  display:grid;
+  grid-template-columns: repeat(4, var(--laneW));
+  pointer-events:none;
+}
+.pad{
+  margin: 0 16px;
+  border-radius: 14px;
+  opacity:.35;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05);
+}
+.pad.red{box-shadow: inset 0 0 0 1px rgba(255,51,85,.35)}
+.pad.yellow{box-shadow: inset 0 0 0 1px rgba(255,210,63,.28)}
+.pad.blue{box-shadow: inset 0 0 0 1px rgba(53,208,255,.28)}
+.pad.green{box-shadow: inset 0 0 0 1px rgba(61,255,122,.28)}
+
+.pad.flash{
+  opacity:.9 !important;
+  filter: saturate(1.15);
+}
+
+.hitEffect{
+  position:absolute;
+  left:50%;
+  width: 72px;
+  height: 22px;
+  transform: translateX(-50%) scale(.75);
+  border-radius: 999px;
+  opacity:0;
+  border:1px solid rgba(255,255,255,.45);
+  box-shadow: 0 0 22px rgba(255,255,255,.35);
+  pointer-events:none;
+  animation: hitBurst .24s ease-out forwards;
+}
+.hitEffect.red{background: rgba(255,51,85,.38)}
+.hitEffect.yellow{background: rgba(255,210,63,.34)}
+.hitEffect.blue{background: rgba(53,208,255,.34)}
+.hitEffect.green{background: rgba(61,255,122,.34)}
+
+.hitEffect.bad{opacity:.55}
+.hitEffect.good{opacity:.75}
+.hitEffect.perfect{opacity:.95}
+
+@keyframes laneHitFlash{
+  0%{opacity:.95}
+  100%{opacity:0}
+}
+
+@keyframes hitBurst{
+  0%{opacity:1; transform: translateX(-50%) scale(.72)}
+  100%{opacity:0; transform: translateX(-50%) scale(1.45)}
+}
+
+.countdown{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  font-size: 92px;
+  font-weight: 950;
+  text-shadow: 0 10px 40px rgba(0,0,0,.5);
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(6px);
+}
+.hidden{display:none}
+
+.footerHints{
+  width: calc(var(--laneW) * 4);
+  max-width:96vw;
+  color: rgba(169,181,199,.95);
+  font-size:12px;
+  display:flex;
+  justify-content:space-between;
+  gap: 12px;
+}

@@ -1,0 +1,163 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Drum Hero (Web)</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">ðŸ¥</div>
+      <div>
+        <div class="title">Drum Hero</div>
+        <div class="subtitle">Estilo Guitar Hero â€¢ Trilha real â€¢ Web Audio</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <label class="btn">
+        <input id="audioFile" type="file" accept="audio/*" hidden />
+        Carregar MÃºsica
+      </label>
+
+      <label class="btn">
+        <input id="beatmapFile" type="file" accept="application/json" hidden />
+        Importar Beatmap
+      </label>
+
+      <button id="btnLoadSample" class="btn secondary">Carregar Beatmap Exemplo</button>
+      <button id="btnAutoMap" class="btn secondary" title="Gera um mapa simples baseado em picos do Ã¡udio">Auto Map</button>
+
+      <button id="btnStart" class="btn primary" disabled>â–¶ï¸ Start</button>
+      <button id="btnPause" class="btn" disabled>â¸ï¸ Pause</button>
+      <button id="btnRestart" class="btn" disabled>â†» Restart</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="left">
+      <div class="panel">
+        <h2>Config</h2>
+
+        <div class="row">
+          <div class="label">Offset (ms)</div>
+          <input id="offsetMs" type="number" value="0" step="5" />
+          <div class="hint">Use para compensar latÃªncia (positivo = notas aparecem â€œmais tardeâ€).</div>
+        </div>
+
+        <div class="row">
+          <div class="label">Velocidade (px/s)</div>
+          <input id="speed" type="number" value="550" step="10" />
+          <div class="hint">Maior = notas descem mais rÃ¡pido.</div>
+        </div>
+
+        <div class="row">
+          <div class="label">Janela Perfect (ms)</div>
+          <input id="winPerfect" type="number" value="50" step="5" />
+        </div>
+
+        <div class="row">
+          <div class="label">Janela Good (ms)</div>
+          <input id="winGood" type="number" value="100" step="5" />
+        </div>
+
+        <div class="row">
+          <div class="label">Janela Bad (ms)</div>
+          <input id="winBad" type="number" value="160" step="5" />
+        </div>
+
+        <div class="row">
+          <div class="label">Pre-roll (ms)</div>
+          <input id="preRoll" type="number" value="1500" step="100" />
+          <div class="hint">Tempo antes da mÃºsica comeÃ§ar (para vocÃª se preparar).</div>
+        </div>
+
+        <div class="row">
+          <div class="label">Teclas</div>
+          <div class="keymap">
+            <div class="keychip red">A</div>
+            <div class="keychip yellow">S</div>
+            <div class="keychip blue">K</div>
+            <div class="keychip green">L</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label">Status</div>
+          <div id="status" class="status">Carregue uma mÃºsica e um beatmap.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Placar</h2>
+        <div class="scoreGrid">
+          <div class="stat">
+            <div class="statLabel">Score</div>
+            <div id="score" class="statValue">0</div>
+          </div>
+          <div class="stat">
+            <div class="statLabel">Combo</div>
+            <div id="combo" class="statValue">0</div>
+          </div>
+          <div class="stat">
+            <div class="statLabel">Mult</div>
+            <div id="mult" class="statValue">x1</div>
+          </div>
+          <div class="stat">
+            <div class="statLabel">Accuracy</div>
+            <div id="acc" class="statValue">0%</div>
+          </div>
+        </div>
+
+        <div class="judges">
+          <div class="judge">Perfect: <span id="jPerfect">0</span></div>
+          <div class="judge">Good: <span id="jGood">0</span></div>
+          <div class="judge">Bad: <span id="jBad">0</span></div>
+          <div class="judge">Miss: <span id="jMiss">0</span></div>
+        </div>
+
+        <div id="lastJudge" class="lastJudge">â€”</div>
+      </div>
+    </section>
+
+    <section class="right">
+      <div class="gameWrap">
+        <div class="gameHUD">
+          <div class="songName" id="songName">Sem mÃºsica</div>
+          <div class="timeLine">
+            <div id="timeFill" class="timeFill"></div>
+          </div>
+          <div class="smallText" id="timeText">0:00 / 0:00</div>
+        </div>
+
+        <div id="game" class="game">
+          <div class="lane red" data-lane="0"><div class="laneLabel">A</div></div>
+          <div class="lane yellow" data-lane="1"><div class="laneLabel">S</div></div>
+          <div class="lane blue" data-lane="2"><div class="laneLabel">K</div></div>
+          <div class="lane green" data-lane="3"><div class="laneLabel">L</div></div>
+
+          <div id="hitLine" class="hitLine"></div>
+
+          <div class="hitPads">
+            <div class="pad red" data-pad="0"></div>
+            <div class="pad yellow" data-pad="1"></div>
+            <div class="pad blue" data-pad="2"></div>
+            <div class="pad green" data-pad="3"></div>
+          </div>
+
+          <div id="countdown" class="countdown hidden">3</div>
+        </div>
+
+        <div class="footerHints">
+          <div>â–¶ï¸ Start sÃ³ habilita apÃ³s <b>mÃºsica + beatmap</b> (ou Auto Map).</div>
+          <div>Dica: ajuste <b>Offset</b> se estiver â€œadiantado/atrasadoâ€.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="main.js"></script>
+</body>
+</html>
