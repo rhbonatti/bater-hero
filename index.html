@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Drum Hero (Web)</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="diff.css" />
+  <link rel="stylesheet" href="combo.css" />
 </head>
 <body>
   <header class="topbar">
@@ -22,13 +24,14 @@
         Carregar Música
       </label>
 
-      <label class="btn">
-        <input id="beatmapFile" type="file" accept="application/json" hidden />
-        Importar Beatmap
-      </label>
-
-      <button id="btnLoadSample" class="btn secondary">Carregar Beatmap Exemplo</button>
       <button id="btnAutoMap" class="btn secondary" title="Gera um mapa simples baseado em picos do áudio">Auto Map</button>
+
+      <div class="diff-select hidden" id="diffSelect">
+        <span>Dificuldade:</span>
+        <button class="btn tiny" data-diff="easy">Fácil</button>
+        <button class="btn tiny" data-diff="medium">Médio</button>
+        <button class="btn tiny active" data-diff="hard">Difícil</button>
+      </div>
 
       <button id="btnStart" class="btn primary" disabled>▶️ Start</button>
       <button id="btnPause" class="btn" disabled>⏸️ Pause</button>
@@ -39,40 +42,9 @@
   <main class="layout">
     <section class="left">
       <div class="panel">
-        <h2>Config</h2>
+        <h2>Info</h2>
 
-        <div class="row">
-          <div class="label">Offset (ms)</div>
-          <input id="offsetMs" type="number" value="0" step="5" />
-          <div class="hint">Use para compensar latência (positivo = notas aparecem “mais tarde”).</div>
-        </div>
 
-        <div class="row">
-          <div class="label">Velocidade (px/s)</div>
-          <input id="speed" type="number" value="550" step="10" />
-          <div class="hint">Maior = notas descem mais rápido.</div>
-        </div>
-
-        <div class="row">
-          <div class="label">Janela Perfect (ms)</div>
-          <input id="winPerfect" type="number" value="50" step="5" />
-        </div>
-
-        <div class="row">
-          <div class="label">Janela Good (ms)</div>
-          <input id="winGood" type="number" value="100" step="5" />
-        </div>
-
-        <div class="row">
-          <div class="label">Janela Bad (ms)</div>
-          <input id="winBad" type="number" value="160" step="5" />
-        </div>
-
-        <div class="row">
-          <div class="label">Pre-roll (ms)</div>
-          <input id="preRoll" type="number" value="1500" step="100" />
-          <div class="hint">Tempo antes da música começar (para você se preparar).</div>
-        </div>
 
         <div class="row">
           <div class="label">Teclas</div>
@@ -94,7 +66,7 @@
         <h2>Placar</h2>
         <div class="scoreGrid">
           <div class="stat">
-            <div class="statLabel">Score</div>
+            <div class="statLabel">Pontos</div>
             <div id="score" class="statValue">0</div>
           </div>
           <div class="stat">
@@ -106,16 +78,20 @@
             <div id="mult" class="statValue">x1</div>
           </div>
           <div class="stat">
-            <div class="statLabel">Accuracy</div>
+            <div class="statLabel">Max Combo</div>
+            <div id="maxCombo" class="statValue">0</div>
+          </div>
+          <div class="stat">
+            <div class="statLabel">Precisão</div>
             <div id="acc" class="statValue">0%</div>
           </div>
         </div>
 
         <div class="judges">
-          <div class="judge">Perfect: <span id="jPerfect">0</span></div>
-          <div class="judge">Good: <span id="jGood">0</span></div>
-          <div class="judge">Bad: <span id="jBad">0</span></div>
-          <div class="judge">Miss: <span id="jMiss">0</span></div>
+          <div class="judge">Perfeito: <span id="jPerfect">0</span></div>
+          <div class="judge">Bom: <span id="jGood">0</span></div>
+          <div class="judge">Ruim: <span id="jBad">0</span></div>
+          <div class="judge">Errou: <span id="jMiss">0</span></div>
         </div>
 
         <div id="lastJudge" class="lastJudge">—</div>
@@ -147,12 +123,14 @@
             <div class="pad green" data-pad="3"></div>
           </div>
 
+          <div id="comboPopup" class="comboPopup hidden"></div>
+
           <div id="countdown" class="countdown hidden">3</div>
         </div>
 
         <div class="footerHints">
           <div>▶️ Start só habilita após <b>música + beatmap</b> (ou Auto Map).</div>
-          <div>Dica: ajuste <b>Offset</b> se estiver “adiantado/atrasado”.</div>
+
         </div>
       </div>
     </section>

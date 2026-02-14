@@ -1,0 +1,32 @@
+
+.comboPopup {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+  font-size: 48px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 0 4px 0 rgba(0,0,0,0.5);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 50;
+  white-space: nowrap;
+}
+
+.comboPopup.show {
+  animation: comboPop 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+@keyframes comboPop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(-10deg); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(0deg); }
+  30% { transform: translate(-50%, -50%) scale(1.0); }
+  80% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+}
+
+.comboPopup.c25 { color: #3dff7a; text-shadow: 0 0 25px rgba(61,255,122,0.6); }
+.comboPopup.c50 { color: #ffd23f; text-shadow: 0 0 25px rgba(255,210,63,0.6); }
+.comboPopup.c75 { color: #ff9533; text-shadow: 0 0 28px rgba(255,149,51,0.65); }
+.comboPopup.c100 { color: #ff3355; text-shadow: 0 0 30px rgba(255,51,85,0.7); }

@@ -7,21 +7,18 @@ const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
 const els = {
   audioFile: $("#audioFile"),
-  beatmapFile: $("#beatmapFile"),
-  btnLoadSample: $("#btnLoadSample"),
+
   btnAutoMap: $("#btnAutoMap"),
   btnYouTubeMap: $("#btnYouTubeMap"),
+  diffSelect: $("#diffSelect"),
+  diffButtons: $$("#diffSelect .btn"),
   btnStart: $("#btnStart"),
   btnPause: $("#btnPause"),
   btnRestart: $("#btnRestart"),
   ytUrl: $("#ytUrl"),
 
-  offsetMs: $("#offsetMs"),
-  speed: $("#speed"),
-  winPerfect: $("#winPerfect"),
-  winGood: $("#winGood"),
-  winBad: $("#winBad"),
-  preRoll: $("#preRoll"),
+
+
 
   status: $("#status"),
   songName: $("#songName"),
@@ -43,6 +40,8 @@ const els = {
 
   timeFill: $("#timeFill"),
   timeText: $("#timeText"),
+  comboPopup: $("#comboPopup"),
+  maxCombo: $("#maxCombo"),
 };
 
 const lanesEls = $$(".lane");
@@ -56,6 +55,7 @@ let audioCtx = null;
 let audioBuffer = null;
 let audioNode = null;
 
+let fullBeatmap = null; // Original beatmap with all notes
 let beatmap = null; // { notes:[{t,lane}], offsetMs, ... }
 let notes = []; // runtime notes (sorted)
 let activeNotes = new Map(); // id -> runtime note
@@ -79,6 +79,7 @@ let stats = {
   good: 0,
   bad: 0,
   miss: 0,
+  maxCombo: 0,
 };
 
 function ensureYoutubeControls() {
@@ -130,7 +131,7 @@ async function refreshYoutubeDepsStatus() {
     if (missing.length > 0) {
       els.btnYouTubeMap.disabled = true;
       els.btnYouTubeMap.title = `Instale: ${missing.join(", ")}`;
-      setStatus(`YouTube indisponivel: instale ${missing.join(" e ")} no PATH (ou via Python: pip install yt-dlp imageio-ffmpeg) e reinicie o servidor.`);
+      setStatus(`YouTube indisponível: instale ${missing.join(" e ")} no PATH (ou via Python: pip install yt-dlp imageio-ffmpeg) e reinicie o servidor.`);
     } else {
       els.btnYouTubeMap.disabled = false;
       els.btnYouTubeMap.title = "Gera beatmap a partir de URL do YouTube";
@@ -164,7 +165,7 @@ async function decodeAudioFromUrl(url) {
   const ctx = ensureAudioCtx();
   const resolvedUrl = /^https?:\/\//i.test(url) ? url : buildApiUrl(url);
   const res = await fetch(resolvedUrl);
-  if (!res.ok) throw new Error("Falha ao baixar ÃƒÂ¡udio do backend.");
+  if (!res.ok) throw new Error("Falha ao baixar áudio do backend.");
   const arr = await res.arrayBuffer();
   return await ctx.decodeAudioData(arr);
 }
@@ -180,7 +181,7 @@ function stopAudioNode() {
 function resetRunState() {
   // clear notes DOM
   for (const n of activeNotes.values()) {
-    n.el.remove();
+    if (n.el) n.el.remove();
   }
   activeNotes.clear();
   nextSpawnIndex = 0;
@@ -195,6 +196,7 @@ function resetRunState() {
     good: 0,
     bad: 0,
     miss: 0,
+    maxCombo: 0,
   };
   updateHUD();
 
@@ -215,6 +217,7 @@ function resetRunState() {
 function updateHUD() {
   els.score.textContent = stats.score.toString();
   els.combo.textContent = stats.combo.toString();
+  els.maxCombo.textContent = stats.maxCombo.toString();
   els.mult.textContent = `x${stats.mult}`;
   els.jPerfect.textContent = stats.perfect.toString();
   els.jGood.textContent = stats.good.toString();
@@ -234,6 +237,43 @@ function setJudgeText(label, cls) {
 
 function canStart() {
   return !!audioBuffer && !!beatmap && Array.isArray(beatmap.notes) && beatmap.notes.length > 0;
+}
+
+function updateDifficulty() {
+  if (!fullBeatmap) return;
+  
+  const activeBtn = els.diffButtons.find(b => b.classList.contains("active"));
+  const diff = activeBtn ? activeBtn.dataset.diff : "hard";
+  
+  let keepRatio = 1.0;
+  if (diff === "easy") keepRatio = 0.35;
+  else if (diff === "medium") keepRatio = 0.70;
+  
+  // Clone notes and filter randomly but consistently
+  // Create a simple seeded random or just use Math.random per note if we rebuild every time? 
+  // Better: filter based on index or hash to be stable if we re-click.
+  // Actually, random is fine if we do it once per selection.
+  
+  const filteredNotes = fullBeatmap.notes.filter((n, idx) => {
+    // We want to keep notes distributed.
+    // Simple approach: pseudo-random hash of index
+    // Or just Math.random() < keepRatio. 
+    // Since we resetRunState whenever beatmap changes, regenerating is fine.
+    
+    // To ensure "easy" is a subset of "medium", which is a subset of "hard":
+    // Assign a random "roll" to each note when loading fullBeatmap?
+    // Let's do that in load/generation time.
+    if (typeof n._roll === "undefined") n._roll = Math.random();
+    return n._roll < keepRatio;
+  });
+  
+  beatmap = {
+    ...fullBeatmap,
+    notes: filteredNotes
+  };
+  
+  els.diffSelect.classList.remove("hidden");
+  setStatus(`Dificuldade: ${activeBtn.textContent} • Notas: ${beatmap.notes.length} / ${fullBeatmap.notes.length}`);
 }
 
 function enableButtons() {
@@ -260,12 +300,12 @@ function cloneBeatmapToRuntime() {
 
 function getSettings() {
   return {
-    offsetMs: Number(els.offsetMs.value) || 0,
-    speed: Math.max(100, Number(els.speed.value) || 550), // px/s
-    winPerfect: Math.max(10, Number(els.winPerfect.value) || 50),
-    winGood: Math.max(20, Number(els.winGood.value) || 100),
-    winBad: Math.max(30, Number(els.winBad.value) || 160),
-    preRoll: Math.max(0, Number(els.preRoll.value) || 1500),
+    offsetMs: 0,
+    speed: 550,
+    winPerfect: 50,
+    winGood: 100,
+    winBad: 160,
+    preRoll: 1500,
   };
 }
 
@@ -322,13 +362,16 @@ function addScore(judge) {
   // Guitar Hero-ish: base + combo/mult
   const base = judge === "perfect" ? 100 : judge === "good" ? 70 : judge === "bad" ? 30 : 0;
 
-  if (judge === "miss") {
+  if (judge === "miss" || judge === "ghost") {
     stats.combo = 0;
     stats.mult = 1;
     return;
   }
 
   stats.combo += 1;
+  if (stats.combo > stats.maxCombo) {
+    stats.maxCombo = stats.combo;
+  }
   // multiplicador por combo
   if (stats.combo >= 40) stats.mult = 4;
   else if (stats.combo >= 20) stats.mult = 3;
@@ -336,6 +379,31 @@ function addScore(judge) {
   else stats.mult = 1;
 
   stats.score += base * stats.mult;
+  
+  // Show combo milestones
+  if (stats.combo === 25) showComboPopup(25);
+  else if (stats.combo === 50) showComboPopup(50);
+  else if (stats.combo === 75) showComboPopup(75);
+  else if (stats.combo === 100) showComboPopup(100);
+}
+
+function showComboPopup(num) {
+  const el = els.comboPopup;
+  el.textContent = `Combo ${num}x!`;
+  el.className = `comboPopup show c${num}`;
+  
+  // Reflow to restart animation if needed, though usually milestones are spaced out
+  void el.offsetWidth;
+  el.classList.add("show");
+  
+  // Hide after animation (1.2s), but CSS handles opacity 0 properly at end
+  // We can just leave it or remove class after timeout if we want to be clean
+  setTimeout(() => {
+    // Only remove if it hasn't been replaced by a newer combo
+    if (el.textContent.includes(String(num))) {
+       el.classList.remove("show");
+    }
+  }, 1200);
 }
 
 function judgeHit(note, deltaMs, wins) {
@@ -348,21 +416,21 @@ function judgeHit(note, deltaMs, wins) {
     stats.perfect += 1;
     stats.hits += 1;
     addScore("perfect");
-    setJudgeText("PERFECT âœ”ï¸", "perfect");
+    setJudgeText("PERFEITO ✔️", "perfect");
     return "perfect";
   }
   if (ad <= wins.winGood) {
     stats.good += 1;
     stats.hits += 1;
     addScore("good");
-    setJudgeText("GOOD", "good");
+    setJudgeText("BOM", "good");
     return "good";
   }
   if (ad <= wins.winBad) {
     stats.bad += 1;
     stats.hits += 1;
     addScore("bad");
-    setJudgeText("BAD", "bad");
+    setJudgeText("RUIM", "bad");
     return "bad";
   }
 
@@ -378,7 +446,7 @@ function markMiss(note) {
   stats.totalJudged += 1;
   stats.miss += 1;
   addScore("miss");
-  setJudgeText("MISS â—", "miss");
+  setJudgeText("ERROU ❗", "miss");
 
   // remove
   if (note.el) note.el.remove();
@@ -475,7 +543,7 @@ function finishSong() {
     if (!n.judged) markMiss(n);
   }
 
-  setStatus("Fim da mÃºsica. VocÃª pode Restart ou trocar mÃºsica/beatmap.");
+  setStatus("Fim da música. Você pode Restart ou trocar música/beatmap.");
   enableButtons();
 }
 
@@ -552,7 +620,7 @@ async function startGame() {
   playing = true;
   paused = false;
 
-  setStatus("Jogando! (A S K L) â€¢ Pause com botÃ£o.");
+  setStatus("Jogando! (A S K L) • Pause com botão.");
   enableButtons();
 
   lastFrameCtxTime = ctx.currentTime;
@@ -576,7 +644,7 @@ function pauseGame() {
   stopAudioNode();
 
   setStatus("Pausado. Clique Pause novamente para retomar.");
-  els.btnPause.textContent = "â–¶ï¸ Resume";
+  els.btnPause.textContent = "▶️ Resume";
   enableButtons();
 }
 
@@ -605,7 +673,7 @@ function resumeGame() {
 
   paused = false;
   setStatus("Jogando!");
-  els.btnPause.textContent = "â¸ï¸ Pause";
+  els.btnPause.textContent = "⏸️ Pause";
   enableButtons();
 
   audioNode.onended = () => {
@@ -616,7 +684,7 @@ function resumeGame() {
 function restartGame() {
   if (!audioBuffer || !beatmap) {
     resetRunState();
-    setStatus("Carregue mÃºsica + beatmap.");
+    setStatus("Carregue música + beatmap.");
     enableButtons();
     return;
   }
@@ -662,19 +730,27 @@ function handleKeyDown(e) {
     }
   }
 
-  if (!best) return;
+  if (best) {
+    const judge = judgeHit(best.n, best.delta, wins);
+    if (!judge) return;
 
-  const judge = judgeHit(best.n, best.delta, wins);
-  if (!judge) return;
+    triggerHitVisual(lane, judge);
 
-  triggerHitVisual(lane, judge);
+    best.n.judged = true;
+    best.n.hit = true;
 
-  best.n.judged = true;
-  best.n.hit = true;
-
-  // remove
-  if (best.n.el) best.n.el.remove();
-  activeNotes.delete(best.n.id);
+    // remove
+    if (best.n.el) best.n.el.remove();
+    activeNotes.delete(best.n.id);
+  } else {
+    // "ghost tap" or "bad hit" - break combo
+    // We only break combo if playing and not paused (already checked above)
+    // Optional: trigger a "miss" visual or sound?
+    // For now just break combo.
+    addScore("ghost");
+    // Maybe show "Miss" text briefly?
+    setJudgeText("MISS (Ghost)", "miss"); 
+  }
 
   updateHUD();
 }
@@ -683,13 +759,17 @@ async function loadBeatmapFromFile(file) {
   const text = await file.text();
   const obj = JSON.parse(text);
   validateBeatmap(obj);
-  beatmap = obj;
-  setStatus(`Beatmap carregado: ${beatmap.title || "Sem tÃ­tulo"} â€¢ Notas: ${beatmap.notes?.length || 0}`);
+  fullBeatmap = obj;
+  // assign rolls
+  fullBeatmap.notes.forEach(n => n._roll = Math.random());
+  
+  updateDifficulty();
+  resetRunState();
   enableButtons();
 }
 
 function validateBeatmap(obj) {
-  if (!obj || typeof obj !== "object") throw new Error("Beatmap invÃ¡lido.");
+  if (!obj || typeof obj !== "object") throw new Error("Beatmap inválido.");
   if (!Array.isArray(obj.notes)) throw new Error("Beatmap precisa ter 'notes' (array).");
   for (const n of obj.notes) {
     if (typeof n.t !== "number" || typeof n.lane !== "number") {
@@ -701,11 +781,13 @@ function validateBeatmap(obj) {
 async function loadSampleBeatmap() {
   // fetch local sample
   const res = await fetch("./beatmaps/sample-beatmap.json");
-  if (!res.ok) throw new Error("NÃ£o consegui carregar o sample-beatmap.json");
+  if (!res.ok) throw new Error("Não consegui carregar o sample-beatmap.json");
   const obj = await res.json();
   validateBeatmap(obj);
-  beatmap = obj;
-  setStatus(`Sample beatmap carregado â€¢ Notas: ${beatmap.notes.length}`);
+  fullBeatmap = obj;
+  fullBeatmap.notes.forEach(n => n._roll = Math.random());
+  updateDifficulty();
+  resetRunState();
   enableButtons();
 }
 
@@ -713,11 +795,11 @@ async function loadSampleBeatmap() {
 // This is intentionally simple (not production-grade), but helps testing quickly.
 async function autoMapFromAudio() {
   if (!audioBuffer) {
-    setStatus("Carregue uma mÃºsica antes de usar Auto Map.");
+    setStatus("Carregue uma música antes de usar Auto Map.");
     return;
   }
 
-  setStatus("Auto Map: analisando Ã¡udio...");
+  setStatus("Auto Map: analisando áudio...");
 
   // Use mono mix
   const ch0 = audioBuffer.getChannelData(0);
@@ -785,15 +867,18 @@ async function autoMapFromAudio() {
     offsetMs: 0,
     notes: notesOut
   };
-
-  setStatus(`Auto Map pronto â€¢ Notas: ${notesOut.length} (ajuste Offset/Velocidade se quiser)`);
+  
+  fullBeatmap = beatmap;
+  fullBeatmap.notes.forEach(n => n._roll = Math.random());
+  
+  updateDifficulty();
   enableButtons();
 }
 
 async function generateBeatmapFromYoutube() {
   await refreshYoutubeDepsStatus();
   if (els.btnYouTubeMap?.disabled) {
-    setStatus("YouTube indisponivel: instale as dependencias e reinicie o servidor.");
+    setStatus("YouTube indisponível: instale as dependências e reinicie o servidor.");
     return;
   }
 
@@ -805,7 +890,7 @@ async function generateBeatmapFromYoutube() {
 
   try {
     if (els.btnYouTubeMap) els.btnYouTubeMap.disabled = true;
-    setStatus("YouTube: baixando audio e gerando beatmap...");
+    setStatus("YouTube: baixando áudio e gerando beatmap...");
 
     const res = await fetch(buildApiUrl("/api/youtube/beatmap"), {
       method: "POST",
@@ -816,18 +901,20 @@ async function generateBeatmapFromYoutube() {
     const data = await res.json().catch(() => null);
     if (!res.ok || !data?.ok) {
       const msg = res.status === 404
-        ? "Endpoint /api/youtube/beatmap nao encontrado. Rode `npm start` no projeto ou configure localStorage.drumHeroApiBase."
+        ? "Endpoint /api/youtube/beatmap não encontrado. Rode `npm start` no projeto ou configure localStorage.drumHeroApiBase."
         : (data?.error || "Falha ao gerar beatmap do YouTube.");
       throw new Error(msg);
     }
 
     validateBeatmap(data.beatmap);
-    beatmap = data.beatmap;
+    fullBeatmap = data.beatmap;
+    fullBeatmap.notes.forEach(n => n._roll = Math.random());
+    
     audioBuffer = await decodeAudioFromUrl(data.audioUrl);
     els.songName.textContent = data.title || "YouTube";
 
+    updateDifficulty();
     resetRunState();
-    setStatus(`YouTube carregado: ${els.songName.textContent} - Notas: ${beatmap.notes.length}`);
     enableButtons();
   } catch (err) {
     console.error(err);
@@ -842,46 +929,21 @@ els.audioFile.addEventListener("change", async (e) => {
   if (!file) return;
 
   try {
-    setStatus("Decodificando Ã¡udio...");
+    setStatus("Decodificando áudio...");
     audioBuffer = await decodeAudioFile(file);
     els.songName.textContent = file.name;
-    setStatus(`MÃºsica carregada: ${file.name} â€¢ DuraÃ§Ã£o: ${fmtTime(audioBuffer.duration)}`);
+    setStatus(`Música carregada: ${file.name} • Duração: ${fmtTime(audioBuffer.duration)}`);
     resetRunState();
     enableButtons();
   } catch (err) {
     console.error(err);
-    setStatus("Falha ao carregar Ã¡udio. Tente MP3/WAV.");
+    setStatus("Falha ao carregar áudio. Tente MP3/WAV.");
   } finally {
     e.target.value = "";
   }
 });
 
-els.beatmapFile.addEventListener("change", async (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
 
-  try {
-    await loadBeatmapFromFile(file);
-    resetRunState();
-    enableButtons();
-  } catch (err) {
-    console.error(err);
-    setStatus("Falha ao carregar beatmap JSON.");
-  } finally {
-    e.target.value = "";
-  }
-});
-
-els.btnLoadSample.addEventListener("click", async () => {
-  try {
-    await loadSampleBeatmap();
-    resetRunState();
-    enableButtons();
-  } catch (err) {
-    console.error(err);
-    setStatus("NÃ£o consegui carregar o beatmap exemplo. Verifique o arquivo.");
-  }
-});
 
 els.btnAutoMap.addEventListener("click", async () => {
   try {
@@ -907,11 +969,21 @@ els.btnPause.addEventListener("click", async () => {
 
 els.btnRestart.addEventListener("click", () => restartGame());
 
+els.diffButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    els.diffButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    updateDifficulty();
+  });
+});
+
 document.addEventListener("keydown", handleKeyDown);
 
 // init
 ensureYoutubeControls();
-setStatus("Carregue uma mÃºsica e um beatmap, ou use Auto Map.");
+
+
+setStatus("Carregue uma música ou use YouTube.");
 if (els.btnYouTubeMap) {
   els.btnYouTubeMap.addEventListener("click", async () => {
     await generateBeatmapFromYoutube();

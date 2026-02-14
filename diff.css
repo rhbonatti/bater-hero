@@ -1,0 +1,41 @@
+.diff-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 6px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.diff-select span {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.diff-select .btn.tiny {
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  opacity: 0.6;
+}
+
+.diff-select .btn.tiny:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0.8;
+}
+
+.diff-select .btn.tiny.active {
+  background: rgba(58, 160, 255, 0.25);
+  border-color: rgba(58, 160, 255, 0.45);
+  opacity: 1;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(58, 160, 255, 0.2);
+}
+
+.hidden {
+  display: none !important;
+}

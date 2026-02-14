@@ -116,6 +116,12 @@ async function resolveYtDlpRunner() {
   if (await commandExists("yt-dlp", ["--version"])) {
     return { command: "yt-dlp", prefixArgs: [] };
   }
+  // Try local binary
+  const localYtDlp = path.join(ROOT_DIR, "yt-dlp.exe");
+  if (fs.existsSync(localYtDlp)) {
+    return { command: localYtDlp, prefixArgs: [] };
+  }
+    
   if (await commandExists("python", ["-m", "yt_dlp", "--version"])) {
     return { command: "python", prefixArgs: ["-m", "yt_dlp"] };
   }
@@ -126,6 +132,17 @@ async function resolveFfmpegCommand() {
   if (await commandExists("ffmpeg", ["-version"])) {
     return "ffmpeg";
   }
+  
+  // Try static ffmpeg
+  try {
+    const ffmpegPath = require("ffmpeg-static");
+    if (ffmpegPath && fs.existsSync(ffmpegPath)) {
+       return ffmpegPath;
+    }
+  } catch (e) {
+    // maybe module not installed
+  }
+
   try {
     const { stdout } = await runCommand("python", [
       "-c",
@@ -152,25 +169,31 @@ async function getYoutubeDependenciesStatus() {
   return { ytDlp, ffmpeg, missing };
 }
 
-async function extractYoutubeTitle(url, ytRunner) {
+async function extractYoutubeTitle(url, ytRunner, ffmpegCmd) {
   try {
-    const { stdout } = await runCommand(ytRunner.command, [
+    const args = [
       ...ytRunner.prefixArgs,
       "--no-playlist",
       "--print",
       "%(title)s",
       "--skip-download",
       url
-    ]);
+    ];
+    if (ffmpegCmd && !ffmpegCmd.startsWith("python")) {
+       args.push("--ffmpeg-location", ffmpegCmd);
+    }
+    
+    const { stdout } = await runCommand(ytRunner.command, args);
     return stdout.trim().split(/\r?\n/).filter(Boolean).pop() || "YouTube";
-  } catch {
+  } catch (err) {
+    console.error("Error extracting title:", err.message);
     return "YouTube";
   }
 }
 
-async function downloadYoutubeAudio(url, jobDir, ytRunner) {
+async function downloadYoutubeAudio(url, jobDir, ytRunner, ffmpegCmd) {
   const outTpl = path.join(jobDir, "audio.%(ext)s");
-  const { stdout } = await runCommand(ytRunner.command, [
+  const args = [
     ...ytRunner.prefixArgs,
     "--no-playlist",
     "--no-progress",
@@ -179,7 +202,12 @@ async function downloadYoutubeAudio(url, jobDir, ytRunner) {
     "-o", outTpl,
     "--print", "after_move:filepath",
     url
-  ]);
+  ];
+  if (ffmpegCmd && !ffmpegCmd.startsWith("python")) {
+     args.push("--ffmpeg-location", ffmpegCmd);
+  }
+
+  const { stdout } = await runCommand(ytRunner.command, args);
 
   const candidates = stdout.trim().split(/\r?\n/).map((v) => v.trim()).filter(Boolean);
   const audioPath = candidates.length ? candidates[candidates.length - 1] : "";
@@ -401,8 +429,8 @@ async function handleYoutubeBeatmap(req, res) {
       throw new Error("Dependencia ausente: instale yt-dlp e ffmpeg no PATH.");
     }
 
-    const title = await extractYoutubeTitle(url, ytRunner);
-    const mp3Path = await downloadYoutubeAudio(url, jobDir, ytRunner);
+    const title = await extractYoutubeTitle(url, ytRunner, ffmpegCommand);
+    const mp3Path = await downloadYoutubeAudio(url, jobDir, ytRunner, ffmpegCommand);
     const wavPath = path.join(jobDir, "audio.wav");
     await convertToWavMono(mp3Path, wavPath, ffmpegCommand);
 
