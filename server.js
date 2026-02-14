@@ -180,12 +180,19 @@ async function extractYoutubeTitle(url, ytRunner, ffmpegCmd) {
       "%(title)s",
       "--skip-download",
       "--no-check-certificates",
-      "--extractor-args", "youtube:player_client=android",
-      "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       url
     ];
     if (ffmpegCmd && !ffmpegCmd.startsWith("python")) {
        args.push("--ffmpeg-location", ffmpegCmd);
+    }
+    
+    // Check for cookies in env
+    const cookiesPath = path.join(ROOT_DIR, "cookies.txt");
+    if (process.env.YOUTUBE_COOKIES) {
+      fs.writeFileSync(cookiesPath, process.env.YOUTUBE_COOKIES);
+      args.unshift("--cookies", cookiesPath);
+    } else if (fs.existsSync(cookiesPath)) {
+      args.unshift("--cookies", cookiesPath);
     }
     
     const { stdout } = await runCommand(ytRunner.command, args);
@@ -207,12 +214,20 @@ async function downloadYoutubeAudio(url, jobDir, ytRunner, ffmpegCmd) {
     "-o", outTpl,
     "--print", "after_move:filepath",
     "--no-check-certificates",
-    "--extractor-args", "youtube:player_client=android",
-    "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
     url
   ];
   if (ffmpegCmd && !ffmpegCmd.startsWith("python")) {
-     args.push("--ffmpeg-location", ffmpegCmd);
+    args.push("--ffmpeg-location", ffmpegCmd);
+  }
+
+  // Check for cookies in env or file
+  const cookiesPath = path.join(ROOT_DIR, "cookies.txt");
+  if (process.env.YOUTUBE_COOKIES) {
+    // Write if not exists or update? Just ensure file exists with content
+    try { fs.writeFileSync(cookiesPath, process.env.YOUTUBE_COOKIES); } catch {}
+    args.unshift("--cookies", cookiesPath);
+  } else if (fs.existsSync(cookiesPath)) {
+    args.unshift("--cookies", cookiesPath);
   }
 
   const { stdout } = await runCommand(ytRunner.command, args);
