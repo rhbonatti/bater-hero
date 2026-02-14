@@ -117,7 +117,9 @@ async function resolveYtDlpRunner() {
     return { command: "yt-dlp", prefixArgs: [] };
   }
   // Try local binary
-  const localYtDlp = path.join(ROOT_DIR, "yt-dlp.exe");
+  const binaryName = process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
+  const localYtDlp = path.join(ROOT_DIR, binaryName);
+  
   if (fs.existsSync(localYtDlp)) {
     return { command: localYtDlp, prefixArgs: [] };
   }

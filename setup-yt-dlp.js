@@ -3,15 +3,22 @@ const path = require('path');
 const fs = require('fs');
 
 async function ensureYtDlp() {
-  const binaryPath = path.join(__dirname, 'yt-dlp.exe'); // Windows specific extension for now since user is on Windows
-  
+  const platform = process.platform;
+  const fileName = platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
+  const binaryPath = path.join(__dirname, fileName);
+
   if (fs.existsSync(binaryPath)) {
     console.log(`yt-dlp já existe em: ${binaryPath}`);
     return;
   }
 
-  console.log('Baixando yt-dlp...');
+  console.log(`Baixando yt-dlp para ${platform}...`);
   await YTDlpWrap.downloadFromGithub(binaryPath);
+  
+  if (platform !== 'win32') {
+    fs.chmodSync(binaryPath, '755');
+  }
+  
   console.log('Download concluído!');
 }
 
