@@ -6,7 +6,7 @@ const { URL } = require("url");
 const crypto = require("crypto");
 const { spawn } = require("child_process");
 
-const HOST = "127.0.0.1";
+const HOST = "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
 const ROOT_DIR = __dirname;
 const MEDIA_DIR = path.join(ROOT_DIR, ".cache-youtube");
