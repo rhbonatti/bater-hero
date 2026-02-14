@@ -918,7 +918,12 @@ async function generateBeatmapFromYoutube() {
     enableButtons();
   } catch (err) {
     console.error(err);
-    setStatus(`YouTube falhou: ${err.message || "erro desconhecido"}`);
+    if (err.message && err.message.includes("Sign in to confirm")) {
+      setStatus("YouTube bloqueou o servidor. Configure YOUTUBE_COOKIES no Render em Environment Variables.");
+      alert("YouTube bloqueou o servidor (anti-bot).\n\nSolução:\n1. Baixe a extensão 'Get cookies.txt LOCALLY'.\n2. Exporte cookies do YouTube.\n3. Cole o conteúdo na variável de ambiente YOUTUBE_COOKIES no Render.");
+    } else {
+      setStatus(`YouTube falhou: ${err.message || "erro desconhecido"}`);
+    }
   } finally {
     if (els.btnYouTubeMap) els.btnYouTubeMap.disabled = false;
   }

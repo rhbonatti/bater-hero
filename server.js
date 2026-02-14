@@ -180,6 +180,8 @@ async function extractYoutubeTitle(url, ytRunner, ffmpegCmd) {
       "%(title)s",
       "--skip-download",
       "--no-check-certificates",
+      "--force-ipv4",
+      "--extractor-args", "youtube:player_client=ios",
       url
     ];
     if (ffmpegCmd && !ffmpegCmd.startsWith("python")) {
@@ -214,6 +216,8 @@ async function downloadYoutubeAudio(url, jobDir, ytRunner, ffmpegCmd) {
     "-o", outTpl,
     "--print", "after_move:filepath",
     "--no-check-certificates",
+    "--force-ipv4",
+    "--extractor-args", "youtube:player_client=ios",
     url
   ];
   if (ffmpegCmd && !ffmpegCmd.startsWith("python")) {
