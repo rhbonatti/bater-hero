@@ -8,11 +8,11 @@ async function ensureYtDlp() {
   const binaryPath = path.join(__dirname, fileName);
 
   if (fs.existsSync(binaryPath)) {
-    console.log(`yt-dlp já existe em: ${binaryPath}`);
-    return;
+    console.log(`Removendo yt-dlp antigo em: ${binaryPath}`);
+    try { fs.unlinkSync(binaryPath); } catch (e) { console.warn("Falha ao remover antigo:", e.message); }
   }
 
-  console.log(`Baixando yt-dlp para ${platform}...`);
+  console.log(`Baixando yt-dlp (latest) para ${platform}...`);
   await YTDlpWrap.downloadFromGithub(binaryPath);
   
   if (platform !== 'win32') {

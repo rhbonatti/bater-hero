@@ -179,6 +179,9 @@ async function extractYoutubeTitle(url, ytRunner, ffmpegCmd) {
       "--print",
       "%(title)s",
       "--skip-download",
+      "--no-check-certificates",
+      "--extractor-args", "youtube:player_client=android",
+      "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       url
     ];
     if (ffmpegCmd && !ffmpegCmd.startsWith("python")) {
@@ -203,6 +206,9 @@ async function downloadYoutubeAudio(url, jobDir, ytRunner, ffmpegCmd) {
     "-f", "bestaudio",
     "-o", outTpl,
     "--print", "after_move:filepath",
+    "--no-check-certificates",
+    "--extractor-args", "youtube:player_client=android",
+    "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
     url
   ];
   if (ffmpegCmd && !ffmpegCmd.startsWith("python")) {
