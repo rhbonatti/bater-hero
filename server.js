@@ -97,6 +97,7 @@ function runCommand(command, args, options = {}) {
         resolve({ stdout, stderr });
       } else {
         const message = stderr.trim() || stdout.trim() || `Falha em ${command}.`;
+        console.error(`[Command Failed] ${command}\n${message}`);
         reject(new Error(message));
       }
     });
@@ -197,6 +198,7 @@ async function extractYoutubeTitle(url, ytRunner, ffmpegCmd) {
       args.unshift("--cookies", cookiesPath);
     }
     
+    console.log(`[Extracting Title] CMD: ${ytRunner.command} ${args.join(" ")}`);
     const { stdout } = await runCommand(ytRunner.command, args);
     return stdout.trim().split(/\r?\n/).filter(Boolean).pop() || "YouTube";
   } catch (err) {
@@ -234,6 +236,7 @@ async function downloadYoutubeAudio(url, jobDir, ytRunner, ffmpegCmd) {
     args.unshift("--cookies", cookiesPath);
   }
 
+  console.log(`[Downloading Audio] CMD: ${ytRunner.command} ${args.join(" ")}`);
   const { stdout } = await runCommand(ytRunner.command, args);
 
   const candidates = stdout.trim().split(/\r?\n/).map((v) => v.trim()).filter(Boolean);
